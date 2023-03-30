@@ -121,7 +121,8 @@ def fs_dir_cache(*dec_args, **dec_kwargs):
 
 def evict_all_cache_for(func_name):
   dir = f'{tempfile.gettempdir()}/cache/{func_name}'
-  shutil.rmtree(dir)
+  if os.path.exists(dir):
+    shutil.rmtree(dir)
 
 
 if __name__ == "__main__":
