@@ -1,1 +1,1 @@
-hashlib
+send2trash
