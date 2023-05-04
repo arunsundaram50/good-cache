@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-import os, pickle, utils, tempfile, threading, timeit, traceback, shutil
+import os, pickle, tempfile, threading, timeit, traceback, shutil
+from . import utils
 from send2trash import send2trash
 from inspect import getfullargspec
 
@@ -52,8 +53,6 @@ def fs_files_cache(*dec_args, **dec_kwargs):
       else:
         dyn_part = args_as_str
       cache_file = f'{tempfile.gettempdir()}/cache/{f.__name__}/{dyn_part}.pickle'
-      print(f'{args_as_str=}')
-      print(f'{cache_file=}')
 
       # recreate stale file
       ret = None
