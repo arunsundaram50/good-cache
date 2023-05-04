@@ -19,24 +19,41 @@ def open_and_lock_cache_file(filename, mode):
     return file_handle
 
 
+def default_f_args_to_str(*dec_args, **dec_kwargs):
+  args_as_str = ", ".join([repr(arg) for arg in dec_args] +
+    [f"{key}={repr(value)}" for key, value in dec_kwargs.items()])
+  return args_as_str
+
+
 """
 Usecase: when the output is dependant on the modified-time of muliple files [specified in the input]
 Output is kept in file system
 """
 def fs_files_cache(*dec_args, **dec_kwargs):
   files_arg_name = dec_kwargs['files'] if 'files' in dec_kwargs else None
-  
-  def f_args_to_str(files):
-    return ';'.join(files)
+  shorten_cache_file = dec_kwargs['shorten_cache_file'] if 'shorten_cache_file' in dec_kwargs else True
+  f_args_to_str = dec_kwargs['args_to_str'] if 'args_to_str' in dec_kwargs else default_f_args_to_str
+  f_is_content_cacheable = dec_kwargs['is_content_cacheable'] if 'is_content_cacheable' in dec_kwargs else lambda f: True
 
   def inner(f):
     argspec = getfullargspec(f)
-    files_arg_pos = argspec.args.index(files_arg_name)
+    if files_arg_name:
+      files_arg_pos = argspec.args.index(files_arg_name)
+    else:
+      files_arg_pos = None
     def wrapper(*args, **kwargs):
-      files_arg_val = args[files_arg_pos]
-      arg_as_str = f_args_to_str(files_arg_val)
-      arg_hash = utils.compute_hash(arg_as_str)
-      cache_file = f'{tempfile.gettempdir()}/cache/{f.__name__}/{arg_hash}.pickle'
+      if files_arg_pos:
+        files_arg_val = args[files_arg_pos]
+      else:
+        files_arg_val = ''
+      args_as_str = f_args_to_str(*args, **kwargs)
+      if shorten_cache_file:
+        dyn_part = utils.compute_hash(args_as_str)
+      else:
+        dyn_part = args_as_str
+      cache_file = f'{tempfile.gettempdir()}/cache/{f.__name__}/{dyn_part}.pickle'
+      print(f'{args_as_str=}')
+      print(f'{cache_file=}')
 
       # recreate stale file
       ret = None
@@ -44,6 +61,8 @@ def fs_files_cache(*dec_args, **dec_kwargs):
         utils.ensure_parent(cache_file)
         try:
           ret = f(*args)
+          if not f_is_content_cacheable(ret):
+            return ret
           with open_and_lock_cache_file(cache_file, 'wb') as fp:
             pickle.dump(ret, fp)
         except:
@@ -125,8 +144,8 @@ def evict_all_cache_for(func_name):
     shutil.rmtree(dir)
 
 
-if __name__ == "__main__":
-  
+if __name__ == "__main__1":
+  ## Example where input is a list of files
   @fs_files_cache(files='filenames')
   def my_large_computation(filenames):
     print(f'my_large_computation(): summing {len(filenames)} files...')
@@ -168,3 +187,59 @@ if __name__ == "__main__":
   print(f'{sum=}, took {t2} while using cache')
 
   print(f'\nCaching was {t1/t2} times faster')
+
+
+if __name__ == "__main__2":
+  ## Example where input has no filenames, but just parameters
+
+  @fs_files_cache()
+  def only_params(a, b):
+    print('processing a+b')
+    return a+b
+
+  print(only_params(1, 24))
+
+
+if __name__ == "__main__3":
+  ## Example where input has filenames, and parameters, but uses default 
+  ## implementation of args_to_str
+
+  @fs_files_cache(files='filenames')
+  def only_params_with_files_arguments(filenames, a, b):
+    print('processing a+b')
+    return a+b
+
+  print(only_params_with_files_arguments(['a.txt', 'b.txt'], 1, 24))
+
+
+if __name__ == "__main__4":
+  ## Example where input has no filenames, and parameters, and uses 
+  ## custom implementation of args_to_str
+
+  def my_args_to_str(*args, **kwargs):
+    return ", ".join([repr(arg) for arg in args])
+
+  @fs_files_cache(args_to_str=my_args_to_str)
+  def only_params_custom(a, b):
+    print('processing a+b')
+    return a+b
+
+  print(only_params_custom(1, 25))
+
+
+if __name__ == "__main__":
+  ## Example where input has no filenames, but just parameters, and uses 
+  ## custom implementation of args_to_str
+
+  def my_args_to_str(*args, **kwargs):
+    a = [repr(arg) for arg in args]
+    b = [f"{key}={repr(value)}" for key, value in kwargs.items()]
+    return ", ".join(a + b)
+
+  @fs_files_cache(files="filenames", args_to_str=my_args_to_str)
+  def only_params_with_files_custom(filenames, a, b):
+    print('processing a+b')
+    return str(a+b)+str(filenames)
+
+  print(only_params_with_files_custom(['a.txt, b.txt'], 1, 25))
+
