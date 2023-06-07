@@ -27,8 +27,8 @@ def default_f_args_to_str(*dec_args, **dec_kwargs):
 
 
 """
-Usecase: when the output is dependant on the modified-time of muliple files [specified in the input]
-Output is kept in file system
+Usecase: when the output is dependant on muliple files and any parameters passed to the function.
+Output is kept in file system and is reused if the files and if the paramerers were used previously
 """
 def fs_files_cache(*dec_args, **dec_kwargs):
   files_arg_name = dec_kwargs['files'] if 'files' in dec_kwargs else None
@@ -86,8 +86,8 @@ def fs_files_cache(*dec_args, **dec_kwargs):
 
 
 """
-Usecase: when the output is dependant on the modified-time of the dir [specified in the input].
-Output is kept in file system
+Usecase: when the output is dependant on dir and the optional parameters passed to the function.
+Output is kept in file system and reused if the dir was not modified and if the paramerers were used previously
 """
 def fs_dir_cache(*dec_args, **dec_kwargs):
   dir_arg_name = dec_kwargs['dir'] if 'dir' in dec_kwargs else None
