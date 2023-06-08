@@ -1,29 +1,30 @@
-# good-cache
-Good-cache includes a collection of Python-based decorators that has the logic to decide whether to execute the decorated function or to use the cached values. This helps to keep the function clean as it avoids the drudgery of embedding the logic all over the place inside of the function.
+# good_cache
+`good_cache` is a Python library that caches the output of your functions. If your function has to read large files as its input or if it has to read files in a directory, and optionally some non-file function parameter values such as a str, int, bool, etc. values then `good_cache` can remember the input combination and return the ouput to the caller as long as the input combination has been seen (and cached) by `good_cache` previously.
 
-## What does it do?
-It caches the output so that the decorated function, say f(), don't have to recompute a perhaphs CPU/GPU intensive, cost-wise expensive, or a long-running computation.
-Any existing calls to f(), or even f() itself, doesn't have to be modified. Only the decorator will have to be applied to f().
+### Here is an article that goes into some detail about `good_cache`:
+- <https://medium.com/@arunsundaramco/boost-your-python-efficiency-with-good-cache-file-and-directory-based-caching-made-simple-d2218365b3ca>
 
-## What is the use case?
-You have a function f() 
-- that (optionally) depends on a set of input files. Some of it may be huge, and hence you want to avoid loading it whenever possible.
-- that (optionally) depends on some input parameters
-- whose output does not change if 
-    - the input files haven't been modified since the last call to f() 
-    - and/or the values of the input parameters haven't changeed
+### Here is the GitHub repo:
+- <https://github.com/arunsundaram50/good-cache>
 
-## What does the decorator do?
-The decorator makes a copy of what f() produces and reuses it whenever possible. 
-If reused, all things that f() did won't be done again.
-
-## Here are examples:
-### You have a file <code>stock-quotes.parquet</code> that looks so:
-| ticker | date | price | 
-|-|-|-|
-|A|1999-01-01|15|
-|AMZN|1999-01-01|24|
-...
+### Here is the pip command to install it:
+```
+pip install good_cache
+```
 
 
+### Here’s a simple example of how you might use good_cache:
+
+```
+from good_cache import fs_files_cache
+
+@fs_files_cache(files='filenames')
+def sum_numbers_in_files(filenames):
+    result = 0
+    for filename in filenames:
+        with open(filename, 'rt') as file:
+            numbers = list(map(int, file.readlines()))
+            result += sum(numbers)
+    return result
+```
 
