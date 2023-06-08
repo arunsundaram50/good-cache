@@ -4,6 +4,39 @@ import os, pickle, tempfile, threading, timeit, traceback, shutil
 from . import utils
 from send2trash import send2trash
 from inspect import getfullargspec
+import pandas as pd
+
+
+def find_storage(file_with_no_ext):
+  for ext in ['pickle', 'parquet']:
+    if os.path.exists(f'{file_with_no_ext}.{ext}'):
+      return ext, f'{file_with_no_ext}.{ext}'
+  return None, None
+
+
+def get_storage(obj, file_with_no_ext):
+  if isinstance(obj, pd.DataFrame):
+    return "parquet", f'{file_with_no_ext}.parquet'
+  return "pickle", f'{file_with_no_ext}.pickle'
+
+
+def save_object(obj, filename):
+  if filename.endswith(".parquet"):
+    obj.to_parquet(filename)
+  else:
+    with open_and_lock_cache_file(filename, 'wb') as f:
+      pickle.dump(obj, f)
+
+
+def read_object(filename):
+  _, extension = os.path.splitext(filename)
+
+  if extension == '.parquet':
+    return pd.read_parquet(filename)
+  else:
+    with open_and_lock_cache_file(filename, 'rb') as f:
+      return pickle.load(f)
+
 
 cache_file_locks = {}
 
@@ -52,18 +85,19 @@ def fs_files_cache(*dec_args, **dec_kwargs):
         dyn_part = utils.compute_hash(args_as_str)
       else:
         dyn_part = args_as_str
-      cache_file = f'{tempfile.gettempdir()}/cache/{f.__name__}/{dyn_part}.pickle'
+      file_stem = f'{tempfile.gettempdir()}/cache/{f.__name__}/{dyn_part}'
+      storage_type, cache_file = find_storage(file_stem)
 
       # recreate stale file
       ret = None
-      if utils.is_stale(cache_file, files_arg_val):
-        utils.ensure_parent(cache_file)
+      if storage_type == None or utils.is_stale(cache_file, files_arg_val):
         try:
           ret = f(*args)
           if not f_is_content_cacheable(ret):
             return ret
-          with open_and_lock_cache_file(cache_file, 'wb') as fp:
-            pickle.dump(ret, fp)
+          storage_type, cache_file = get_storage(ret, file_stem)
+          utils.ensure_parent(cache_file)
+          save_object(ret, cache_file)
         except:
           if os.path.exists(cache_file):
             send2trash(cache_file)
@@ -71,8 +105,7 @@ def fs_files_cache(*dec_args, **dec_kwargs):
 
       # load file
       try:
-        with open_and_lock_cache_file(cache_file, 'rb') as fp:
-          ret = pickle.load(fp)
+        ret = read_object(cache_file)
       except:
         utils.log(traceback.format_exc(0))
         if os.path.exists(cache_file):
