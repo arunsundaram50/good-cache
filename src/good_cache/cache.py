@@ -8,7 +8,7 @@ import pandas as pd
 
 
 def find_storage(file_with_no_ext):
-  for ext in ['pickle', 'parquet']:
+  for ext in ['parquet', 'pickle']:
     if os.path.exists(f'{file_with_no_ext}.{ext}'):
       return ext, f'{file_with_no_ext}.{ext}'
   return None, None
@@ -76,7 +76,7 @@ def fs_files_cache(*dec_args, **dec_kwargs):
     else:
       files_arg_pos = None
     def wrapper(*args, **kwargs):
-      if files_arg_pos:
+      if files_arg_pos!=None:
         files_arg_val = args[files_arg_pos]
       else:
         files_arg_val = ''
@@ -99,7 +99,7 @@ def fs_files_cache(*dec_args, **dec_kwargs):
           utils.ensure_parent(cache_file)
           save_object(ret, cache_file)
         except:
-          if os.path.exists(cache_file):
+          if cache_file!=None and os.path.exists(cache_file):
             send2trash(cache_file)
           raise ValueError(f"Error invoking {f.__name__}")
 
@@ -108,7 +108,7 @@ def fs_files_cache(*dec_args, **dec_kwargs):
         ret = read_object(cache_file)
       except:
         utils.log(traceback.format_exc(0))
-        if os.path.exists(cache_file):
+        if cache_file!=None and os.path.exists(cache_file):
           send2trash(cache_file)
         raise ValueError(f"Error reading previous result of {f.__name__}")
 

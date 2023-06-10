@@ -1,4 +1,7 @@
-import os, hashlib, sys
+#!/usr/bin/env python3
+
+
+import os, hashlib, sys, datetime, time
 PWD = os.getcwd()
 
 def compute_hash(content):
@@ -9,19 +12,25 @@ def compute_hash(content):
 
 # staleness of file versus source files
 def is_stale(derived_file, src_files):
+
+  def dt2str(dt):
+    return datetime.datetime.fromtimestamp(dt).strftime('%Y-%m-%d %H:%M:%S')
+
+  def t2str(ts):
+    return time.strftime("%Y-%m-%d %H:%M:%S", ts)
+
   derived_file = os.path.expanduser(derived_file)
   if not os.path.exists(derived_file):
     return True
 
-  for src_file in src_files:
+  for src_file in src_files: # This could be considered an exception condition
     if not os.path.exists(os.path.expanduser(src_file)):
-      return False
+      raise ValueError(f'File {src_file} does not exist')
 
-  src_file_times = map(lambda src_file: os.path.getmtime(os.path.expanduser(src_file)), src_files)
-
-  derived_file_time = os.path.getmtime(derived_file)
-  for src_file_time in src_file_times:
-    if derived_file_time < src_file_time:
+  derived_file_time = time.localtime(os.path.getmtime(derived_file))
+  for src_file in src_files:
+    src_file_time = time.localtime(os.path.getmtime(src_file))
+    if src_file_time > derived_file_time:
       return True
 
   return False
@@ -48,3 +57,11 @@ def log(*args, **kwargs):
   print(f'File "{rel_cwd}", line {frame.f_lineno}', end=': ')
   print(*args, **kwargs)
   sys.stdout.flush()
+
+
+if __name__ == "__main__":
+  der_file = "/tmp/cache/my_filter/5fb4935e8cc63f9e578089a5f1b8b184.pickle"
+  src_files = ["/tmp/test.parquet"]
+
+  b = is_stale(der_file, src_files)
+  print(b)
