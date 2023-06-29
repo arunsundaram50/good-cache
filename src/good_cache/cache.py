@@ -92,7 +92,7 @@ def fs_files_cache(*dec_args, **dec_kwargs):
       return storage_type, cache_file, files_arg_val, file_stem
 
     def evict(*args, **kwargs):
-      _, cache_file, _, _ = get_cache_file(*args, **kwargs)
+      _, cache_file, *_ = get_cache_file(*args, **kwargs)
       if os.path.exists(cache_file):
         try:
           send2trash(cache_file)
@@ -303,7 +303,7 @@ if __name__ == "__main__":
     with open('/tmp/b.txt', 'wt') as fp:
       print(1, file=fp)
 
-  storage_type, cache_file, _, _ = only_params_with_files_custom.get_cache_file(['a.txt, b.txt'], 1, 25)
+  storage_type, cache_file, *_ = only_params_with_files_custom.get_cache_file(['a.txt, b.txt'], 1, 25)
   print(f'{storage_type=}, {cache_file=}')
   # only_params_with_files_custom.evict(['/tmp/a.txt', '/tmp/b.txt'], 1, 25)
   print(only_params_with_files_custom(['/tmp/a.txt', '/tmp/b.txt'], 1, 25))
