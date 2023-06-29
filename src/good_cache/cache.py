@@ -293,18 +293,21 @@ if __name__ == "__main__":
     print('processing a+b')
     return str(a+b)+str(filenames)
 
-  if not os.path.exists('/tmp/a.txt'):
-    with open('/tmp/a.txt', 'wt') as fp:
+  file_a = '/tmp/a.txt'
+  file_b = '/tmp/b.txt'
+  if not os.path.exists(file_a):
+    with open(file_a, 'wt') as fp:
       print(1, file=fp)
       print(2, file=fp)
       print(3, file=fp)
 
-  if not os.path.exists('/tmp/b.txt'):
-    with open('/tmp/b.txt', 'wt') as fp:
+  if not os.path.exists(file_b):
+    with open(file_b, 'wt') as fp:
       print(1, file=fp)
 
-  storage_type, cache_file, *_ = only_params_with_files_custom.get_cache_file(['a.txt, b.txt'], 1, 25)
+  storage_type, cache_file, *_ = only_params_with_files_custom.get_cache_file([file_a, file_b], 1, 25)
   print(f'{storage_type=}, {cache_file=}')
-  # only_params_with_files_custom.evict(['/tmp/a.txt', '/tmp/b.txt'], 1, 25)
-  print(only_params_with_files_custom(['/tmp/a.txt', '/tmp/b.txt'], 1, 25))
+  # only_params_with_files_custom.evict([file_a, file_b], 1, 25)
+  print(only_params_with_files_custom([file_a, file_b], 1, 25))
 
+ 
