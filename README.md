@@ -28,3 +28,6 @@ def sum_numbers_in_files(filenames):
     return result
 ```
 
+
+### Here's an example of how you can evict a previous cache for a particular parameter(s)
+evicted = sum_numbers_in_files.evict(['a.txt', 'b.txt'])

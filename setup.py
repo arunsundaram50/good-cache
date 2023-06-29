@@ -8,7 +8,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name='good_cache',
-    version='0.1.31',
+    version='0.1.32',
     url='https://github.com/arunsundaram50/good-cache.git',
     author='Arun Sundaram',
     author_email='arun_co@yahoo.com',

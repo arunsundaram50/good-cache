@@ -2,6 +2,7 @@
 
 import os, pickle, tempfile, threading, timeit, traceback, shutil
 from . import utils
+# import utils # for local testing
 from send2trash import send2trash
 from inspect import getfullargspec
 import pandas as pd
@@ -75,7 +76,8 @@ def fs_files_cache(*dec_args, **dec_kwargs):
       files_arg_pos = argspec.args.index(files_arg_name)
     else:
       files_arg_pos = None
-    def wrapper(*args, **kwargs):
+
+    def get_cache_file(*args, **kwargs):
       if files_arg_pos!=None:
         files_arg_val = args[files_arg_pos]
       else:
@@ -87,6 +89,21 @@ def fs_files_cache(*dec_args, **dec_kwargs):
         dyn_part = args_as_str
       file_stem = f'{tempfile.gettempdir()}/cache/{f.__name__}/{dyn_part}'
       storage_type, cache_file = find_storage(file_stem)
+      return storage_type, cache_file, files_arg_val, file_stem
+
+    def evict(*args, **kwargs):
+      _, cache_file, _, _ = get_cache_file(*args, **kwargs)
+      if os.path.exists(cache_file):
+        try:
+          send2trash(cache_file)
+          return True
+        except:
+          os.unlink(cache_file)
+          return True
+      return False
+
+    def wrapper(*args, **kwargs):
+      storage_type, cache_file, files_arg_val, file_stem = get_cache_file(*args, **kwargs)
 
       # recreate stale file
       ret = None
@@ -114,6 +131,8 @@ def fs_files_cache(*dec_args, **dec_kwargs):
 
       return ret
 
+    wrapper.get_cache_file = get_cache_file
+    wrapper.evict = evict
     return wrapper
   return inner
 
@@ -131,6 +150,7 @@ def fs_dir_cache(*dec_args, **dec_kwargs):
   def inner(f):
     argspec = getfullargspec(f)
     dir_arg_pos = argspec.args.index(dir_arg_name)
+
     def wrapper(*args, **kwargs):
       dir_arg_val = args[dir_arg_pos]
       arg_str = f_args_to_str(*args, **kwargs)
@@ -273,5 +293,18 @@ if __name__ == "__main__":
     print('processing a+b')
     return str(a+b)+str(filenames)
 
-  print(only_params_with_files_custom(['a.txt, b.txt'], 1, 25))
+  if not os.path.exists('/tmp/a.txt'):
+    with open('/tmp/a.txt', 'wt') as fp:
+      print(1, file=fp)
+      print(2, file=fp)
+      print(3, file=fp)
+
+  if not os.path.exists('/tmp/b.txt'):
+    with open('/tmp/b.txt', 'wt') as fp:
+      print(1, file=fp)
+
+  storage_type, cache_file, _, _ = only_params_with_files_custom.get_cache_file(['a.txt, b.txt'], 1, 25)
+  print(f'{storage_type=}, {cache_file=}')
+  # only_params_with_files_custom.evict(['/tmp/a.txt', '/tmp/b.txt'], 1, 25)
+  print(only_params_with_files_custom(['/tmp/a.txt', '/tmp/b.txt'], 1, 25))
 
