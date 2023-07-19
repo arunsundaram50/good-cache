@@ -1,19 +1,21 @@
 # good_cache
 `good_cache` is a Python library that caches the output of your functions. If your function has to read large files as its input or if it has to read files in a directory, and optionally some non-file function parameter values such as a str, int, bool, etc. values then `good_cache` can remember the input combination and return the ouput to the caller as long as the input combination has been seen (and cached) by `good_cache` previously.
 
-### Here is an article that goes into some detail about `good_cache`:
+### Medium.com article that goes into some detail about `good_cache`:
 - <https://medium.com/@arunsundaramco/boost-your-python-efficiency-with-good-cache-file-and-directory-based-caching-made-simple-d2218365b3ca>
 
-### Here is the GitHub repo:
+
+### GitHub repo:
 - <https://github.com/arunsundaram50/good-cache>
 
-### Here is the pip command to install it:
+### pip command to install it:
 ```
 pip install good_cache
 ```
 
 
-### Here’s a simple example of how you might use good_cache:
+### A simple example of how you might use good_cache:
+Sum up all the numbers in the given list of files
 
 ```
 from good_cache import fs_files_cache
@@ -26,8 +28,10 @@ def sum_numbers_in_files(filenames):
             numbers = list(map(int, file.readlines()))
             result += sum(numbers)
     return result
+
+total = sum_numbers_in_files(['a.txt', 'b.txt'])
 ```
 
 
-### Here's an example of how you can evict a previous cache for a particular parameter(s)
+### You can evict (remove) a previous cache for a particular parameter(s)
 evicted = sum_numbers_in_files.evict(['a.txt', 'b.txt'])
