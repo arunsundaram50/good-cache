@@ -21,7 +21,7 @@ you force a call to the target function, you can call evict like so:
 ```
 evicted = only_params_with_files_custom.evict(['/tmp/a.txt', '/tmp/b.txt'], 1, 25)
 if not evicted:
-  _, cache_file, _, _ = only_params_with_files_custom.get_cache_file(['/tmp/a.txt', '/tmp/b.txt'], 1, 25)
+  _, cache_file, _, _ = only_params_with_files_custom.get_cache_file`(['/tmp/a.txt', '/tmp/b.txt'], 1, 25)
   print(f'The {cache_file=} was not found to delete')
 ```
-Note: the parameters have to be exact.
+Not very surprisingly, the parameters to `only_param_with_files_custom` calls have be exact for `good_cache` for it to deal with the correct cached information.
